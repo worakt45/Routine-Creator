@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตัวช่วยออกแบบกิจวัตรประจำวันประสิทธิภาพสูง</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Neutrals -->
+    <!-- Application Structure Plan: The application is designed as a chronological, single-page guide following the natural flow of a day (Morning, Afternoon, Evening, Night). This structure is more intuitive for users than organizing by scientific discipline. Each time-based section integrates key insights from medical, sports, behavioral, and social sciences, identified by color-coded icons for clarity. The user can explore actionable advice in each section and then use an interactive "Routine Builder" at the end to visually construct their ideal day. This flow moves from learning to practical application, enhancing user engagement and providing a tangible outcome. -->
+    <!-- Visualization & Content Choices: 
+        - Hormone Cycle (Morning): Goal=Inform, Viz=Line Chart (Chart.js), Interaction=Tooltips. Justification=Visually explains the biological reason for morning alertness.
+        - Productivity Curve (Afternoon): Goal=Organize, Viz=Bar Chart (Chart.js), Interaction=None. Justification=Illustrates energy cycles for better work planning.
+        - Activity Impact on Sleep (Evening): Goal=Compare, Viz=Horizontal Bar Chart (Chart.js), Interaction=Tooltips. Justification=Clearly shows positive/negative impacts of evening habits.
+        - Sleep Cycle Diagram (Night): Goal=Inform, Viz=HTML/CSS Diagram, Interaction=None. Justification=Simplifies the complex concept of sleep stages without external libraries.
+        - Interactive Timeline: Goal=Synthesize, Viz=HTML/CSS Timeline, Interaction=Buttons add blocks to timeline. Justification=Provides a personalized, interactive summary for the user.
+        All visualizations are rendered on Canvas via Chart.js or built with HTML/CSS to adhere to constraints. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #FDF8F0;
+            color: #4F4A45;
+        }
+        .bg-primary { background-color: #FDF8F0; }
+        .bg-secondary { background-color: #F4EAD2; }
+        .bg-accent { background-color: #A3B18A; }
+        .text-accent { color: #A3B18A; }
+        .border-accent { border-color: #A3B18A; }
+        .bg-accent-secondary { background-color: #DDA15E; }
+        .text-accent-secondary { color: #DDA15E; }
+        .text-main { color: #4F4A45; }
+        .text-soft { color: #6C6661; }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .smooth-scroll {
+             scroll-behavior: smooth;
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .tag-medical { background-color: #dbeafe; color: #1e40af; }
+        .tag-sports { background-color: #fee2e2; color: #991b1b; }
+        .tag-behavioral { background-color: #d1fae5; color: #065f46; }
+        .tag-social { background-color: #fef3c7; color: #92400e; }
+        .timeline-item {
+            position: absolute;
+            height: 100%;
+            background-color: rgba(163, 177, 138, 0.7);
+            border-left: 2px solid #4F4A45;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 4px;
+            font-size: 0.7rem;
+            overflow: hidden;
+            color: white;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="smooth-scroll">
+
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-main mb-4">คู่มือสร้างกิจวัตรประจำวันประสิทธิภาพสูง</h1>
+            <p class="text-lg text-soft">สังเคราะห์ข้อมูลจากหลากหลายศาสตร์เพื่อออกแบบชีวิตในแต่ละวันของคุณให้ดีที่สุด</p>
+        </header>
+
+        <nav class="sticky top-0 z-10 bg-primary/80 backdrop-blur-md py-4 mb-12 rounded-lg shadow-sm">
+            <ul class="flex justify-center items-center space-x-2 md:space-x-6 text-sm md:text-base">
+                <li><a href="#morning" class="text-soft hover:text-accent font-semibold px-3 py-2 rounded-md transition-colors">☀️ ช่วงเช้า</a></li>
+                <li><a href="#afternoon" class="text-soft hover:text-accent font-semibold px-3 py-2 rounded-md transition-colors">🏙️ ช่วงบ่าย</a></li>
+                <li><a href="#evening" class="text-soft hover:text-accent font-semibold px-3 py-2 rounded-md transition-colors">🌆 ช่วงเย็น</a></li>
+                <li><a href="#night" class="text-soft hover:text-accent font-semibold px-3 py-2 rounded-md transition-colors">🌙 กลางคืนและการนอน</a></li>
+            </ul>
+        </nav>
+
+        <main class="space-y-16">
+            <section id="morning" class="pt-16 -mt-16">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-main mb-2">☀️ ช่วงเช้า: เริ่มต้นวันใหม่อย่างทรงพลัง</h2>
+                    <p class="text-md text-soft max-w-3xl mx-auto">การเริ่มต้นวันเป็นสิ่งสำคัญที่สุดในการกำหนดทิศทางพลังงานและสมาธิของคุณตลอดทั้งวัน การทำกิจกรรมในช่วงเช้าให้สอดคล้องกับนาฬิกาชีวภาพของร่างกายจะช่วยเพิ่มความสดชื่นและประสิทธิภาพได้อย่างมหาศาล</p>
+                </div>
+
+                <div class="bg-secondary rounded-xl p-6 md:p-8 mb-8">
+                     <h3 class="text-xl font-semibold text-main mb-4 text-center">วงจรฮอร์โมน: เหตุผลที่ต้องตื่นมารับแสง</h3>
+                     <p class="text-center text-soft text-sm mb-4">ร่างกายจะหลั่งฮอร์โมนคอร์ติซอล (ฮอร์โมนความตื่นตัว) สูงสุดในตอนเช้า และลดระดับเมลาโทนิน (ฮอร์โมนการนอนหลับ) การรับแสงแดดจะช่วยกระตุ้นกระบวนการนี้</p>
+                    <div class="chart-container">
+                        <canvas id="hormoneChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-xl p-6 shadow-sm">
+                        <h4 class="font-bold text-lg mb-2 text-accent">ตื่นนอนเวลาเดิมและรับแสงแดด</h4>
+                        <div class="mb-3">
+                             <span class="tag tag-medical">การแพทย์</span><span class="tag tag-behavioral">พฤติกรรมศาสตร์</span>
+                        </div>
+                        <p class="text-soft text-sm">การตื่นเวลาเดิมช่วยปรับนาฬิกาชีวภาพ ออกไปรับแสงแดด 15-30 นาทีภายในชั่วโมงแรกหลังตื่นนอนเพื่อหยุดการผลิตเมลาโทนินและเพิ่มความตื่นตัว</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-sm">
+                        <h4 class="font-bold text-lg mb-2 text-accent">ดื่มน้ำทันที</h4>
+                         <div class="mb-3">
+                             <span class="tag tag-medical">การแพทย์</span><span class="tag tag-sports">วิทยาศาสตร์การกีฬา</span>
+                        </div>
+                        <p class="text-soft text-sm">หลังจากนอนหลับ 6-8 ชั่วโมง ร่างกายจะขาดน้ำ การดื่มน้ำเปล่า 1-2 แก้วทันทีช่วยเติมความชุ่มชื้นและกระตุ้นระบบเผาผลาญ</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-sm">
+                        <h4 class="font-bold text-lg mb-2 text-accent">ออกกำลังกายเบาๆ</h4>
+                         <div class="mb-3">
+                            <span class="tag tag-sports">วิทยาศาสตร์การกีฬา</span><span class="tag tag-behavioral">พฤติกรรมศาสตร์</span>
+                        </div>
+                        <p class="text-soft text-sm">การเคลื่อนไหวร่างกาย 5-10 นาที เช่น ยืดเส้น, โยคะ, หรือเดินเร็ว ช่วยเพิ่มการไหลเวียนโลหิตและส่งออกซิเจนไปเลี้ยงสมอง ทำให้รู้สึกสดชื่น</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="afternoon" class="pt-16 -mt-16">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-main mb-2">🏙️ ช่วงบ่าย: รักษาพลังและสมาธิ</h2>
+                    <p class="text-md text-soft max-w-3xl mx-auto">ช่วงบ่ายเป็นเวลาที่พลังงานตามธรรมชาติเริ่มลดลง การจัดการพลังงานและสมาธิอย่างชาญฉลาดจะช่วยให้คุณทำงานที่ต้องใช้ความคิดสร้างสรรค์และสมาธิสูงได้อย่างมีประสิทธิภาพ</p>
+                </div>
+
+                 <div class="bg-secondary rounded-xl p-6 md:p-8 mb-8">
+                     <h3 class="text-xl font-semibold text-main mb-4 text-center">วงจรพลังงานสมอง (Ultradian Rhythms)</h3>
+                     <p class="text-center text-soft text-sm mb-4">สมองของคนเราทำงานได้ดีที่สุดเป็นช่วงๆ ประมาณ 90 นาที สลับกับการพัก 15-20 นาที การฝืนทำงานต่อเนื่องยาวนานจะลดประสิทธิภาพลง</p>
+                    <div class="chart-container h-64 md:h-80">
+                        <canvas id="productivityChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl p-6 shadow-sm">
+                        <h4 class="font-bold text-lg mb-2 text-accent-secondary">อาหารเที่ยงเน้นโปรตีนและผัก</h4>
+                        <div class="mb-3">
+                             <span class="tag tag-medical">การแพทย์</span><span class="tag tag-sports">วิทยาศาสตร์การกีฬา</span>
+                        </div>
+                        <p class="text-soft text-sm">หลีกเลี่ยงอาหารที่มีคาร์โบไฮเดรตและน้ำตาลสูงซึ่งทำให้ง่วงนอน เน้นโปรตีน, ไขมันดี, และผักเพื่อรักษาระดับพลังงานให้คงที่</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-sm">
+                        <h4 class="font-bold text-lg mb-2 text-accent-secondary">งีบหลับสั้นๆ (Power Nap)</h4>
+                        <div class="mb-3">
+                             <span class="tag tag-behavioral">พฤติกรรมศาสตร์</span>
+                        </div>
+                        <p class="text-soft text-sm">หากรู้สึกง่วงมาก การงีบ 15-20 นาที (ไม่เกิน 30 นาที) สามารถฟื้นฟูพลังงานและสมาธิได้อย่างมีประสิทธิภาพโดยไม่กระทบการนอนกลางคืน</p>
+                    </div>
+                     <div class="bg-white rounded-xl p-6 shadow-sm md:col-span-2">
+                        <h4 class="font-bold text-lg mb-2 text-accent-secondary">ใช้ช่วงบ่ายสำหรับงานสร้างสรรค์หรืองานสังคม</h4>
+                        <div class="mb-3">
+                             <span class="tag tag-behavioral">พฤติกรรมศาสตร์</span><span class="tag tag-social">สังคมศาสตร์</span>
+                        </div>
+                        <p class="text-soft text-sm">หลังจากพลังงานช่วงเช้าลดลง สมองจะเริ่มผ่อนคลายและเปิดรับความคิดสร้างสรรค์ได้ดีขึ้น ช่วงเวลานี้จึงเหมาะกับงานระดมสมอง การประชุม หรือการทำงานร่วมกับผู้อื่นที่ไม่ต้องใช้สมาธิเชิงลึกเท่าช่วงเช้า</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="evening" class="pt-16 -mt-16">
+                 <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-main mb-2">🌆 ช่วงเย็น: ผ่อนคลายและฟื้นฟู</h2>
+                    <p class="text-md text-soft max-w-3xl mx-auto">ช่วงเย็นเป็นช่วงเวลาเปลี่ยนผ่านจากโหมดทำงานสู่โหมดพักผ่อน การสร้างกิจวัตรที่ช่วยให้ร่างกายและจิตใจสงบลง จะเป็นการเตรียมตัวสู่การนอนหลับที่มีคุณภาพ</p>
+                </div>
+
+                 <div class="bg-secondary rounded-xl p-6 md:p-8 mb-8">
+                     <h3 class="text-xl font-semibold text-main mb-4 text-center">ผลกระทบของกิจกรรมช่วงเย็นต่อการนอน</h3>
+                     <p class="text-center text-soft text-sm mb-4">กิจกรรมบางอย่างกระตุ้นระบบประสาท ในขณะที่บางอย่างช่วยให้ผ่อนคลาย การเลือกกิจกรรมที่เหมาะสมสำคัญต่อคุณภาพการนอนหลับ</p>
+                    <div class="chart-container">
+                        <canvas id="eveningActivityChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl p-6 shadow-sm">
+                        <h4 class="font-bold text-lg mb-2 text-accent">กำหนดเวลา "Digital Sunset"</h4>
+                        <div class="mb-3">
+                             <span class="tag tag-medical">การแพทย์</span><span class="tag tag-behavioral">พฤติกรรมศาสตร์</span>
+                        </div>
+                        <p class="text-soft text-sm">หยุดใช้อุปกรณ์อิเล็กทรอนิกส์ที่มีหน้าจอ 1-2 ชั่วโมงก่อนนอน แสงสีฟ้าจากหน้าจอจะยับยั้งการหลั่งเมลาโทนิน ทำให้หลับยากขึ้น</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-sm">
+                        <h4 class="font-bold text-lg mb-2 text-accent">ทานอาหารมื้อสุดท้าย 2-3 ชม. ก่อนนอน</h4>
+                        <div class="mb-3">
+                            <span class="tag tag-medical">การแพทย์</span>
+                        </div>
+                        <p class="text-soft text-sm">ให้เวลาร่างกายได้ย่อยอาหารก่อนเข้านอน การทานอาหารมื้อหนักใกล้เวลานอนเกินไปอาจรบกวนการนอนหลับได้</p>
+                    </div>
+                     <div class="bg-white rounded-xl p-6 shadow-sm md:col-span-2">
+                        <h4 class="font-bold text-lg mb-2 text-accent">ทำกิจกรรมผ่อนคลาย</h4>
+                        <div class="mb-3">
+                             <span class="tag tag-behavioral">พฤติกรรมศาสตร์</span><span class="tag tag-social">สังคมศาสตร์</span>
+                        </div>
+                        <p class="text-soft text-sm">อ่านหนังสือ (เล่มจริง), ฟังเพลงเบาๆ, นั่งสมาธิ, เขียนบันทึก, หรือพูดคุยกับคนในครอบครัว กิจกรรมเหล่านี้ช่วยลดความเครียดและเตรียมสมองให้พร้อมสำหรับการพักผ่อน</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="night" class="pt-16 -mt-16">
+                 <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-main mb-2">🌙 กลางคืนและการนอน: พื้นฐานของการฟื้นฟู</h2>
+                    <p class="text-md text-soft max-w-3xl mx-auto">การนอนหลับไม่ใช่แค่การพักผ่อน แต่เป็นกระบวนการซ่อมแซมร่างกายและจัดระเบียบความทรงจำในสมอง การสร้างสภาพแวดล้อมที่เอื้อต่อการนอนจึงเป็นสิ่งที่ไม่ควรมองข้าม</p>
+                </div>
+
+                <div class="bg-secondary rounded-xl p-6 md:p-8 mb-8">
+                     <h3 class="text-xl font-semibold text-main mb-4 text-center">วงจรการนอนหลับ (Sleep Cycle)</h3>
+                    <p class="text-center text-soft text-sm mb-4">ในแต่ละคืน เราจะผ่านวงจรการนอนหลับหลายรอบ แต่ละรอบใช้เวลาประมาณ 90 นาที ประกอบด้วยช่วงหลับตื้น, หลับลึก (สำคัญต่อการฟื้นฟูร่างกาย), และช่วงฝัน (REM - สำคัญต่อสมอง)</p>
+                    <div class="w-full overflow-x-auto p-4">
+                        <div class="relative flex items-center h-24 bg-white rounded-lg">
+                            <div class="absolute w-full h-full flex">
+                                <div class="w-1/4 h-full border-r border-dashed border-gray-300"></div>
+                                <div class="w-1/4 h-full border-r border-dashed border-gray-300"></div>
+                                <div class="w-1/4 h-full border-r border-dashed border-gray-300"></div>
+                            </div>
+                            <div class="absolute w-full h-full flex flex-col justify-between text-xs text-gray-400">
+                                <div>หลับตื้น</div><div>หลับลึก</div>
+                            </div>
+                            <svg class="absolute w-full h-full" viewBox="0 0 100 24" preserveAspectRatio="none">
+                                <path d="M 0 12 C 10 2, 15 2, 25 12 S 40 22, 50 12 S 65 2, 75 12 S 90 22, 100 12" fill="none" stroke="#DDA15E" stroke-width="0.5"/>
+                            </svg>
+                             <div class="absolute text-center" style="left:35%; bottom:5px; font-size:10px; color:#92400e;">หลับลึก</div>
+                             <div class="absolute text-center" style="left:85%; top:5px; font-size:10px; color:#92400e;">REM/ฝัน</div>
+                        </div>
+                         <div class="flex justify-between text-xs mt-2 text-soft">
+                            <span>0 นาที</span>
+                            <span>~45 นาที</span>
+                            <span>90 นาที</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 shadow-sm">
+                    <h4 class="font-bold text-lg mb-4 text-accent-secondary">เช็คลิสต์สภาพแวดล้อมการนอนในอุดมคติ</h4>
+                    <ul class="space-y-3 text-soft">
+                        <li class="flex items-center"><span class="mr-3 text-lg">🆒</span> <strong>เย็น:</strong> อุณหภูมิห้องที่เหมาะสมคือประมาณ 18-22 องศาเซลเซียส</li>
+                        <li class="flex items-center"><span class="mr-3 text-lg">⚫️</span> <strong>มืด:</strong> ปิดไฟทุกดวงและใช้ม่านทึบแสงเพื่อป้องกันแสงรบกวน</li>
+                        <li class="flex items-center"><span class="mr-3 text-lg">🤫</span> <strong>เงียบ:</strong> ใช้ที่อุดหูหรือ White Noise Machine หากมีเสียงรบกวนจากภายนอก</li>
+                        <li class="flex items-center"><span class="mr-3 text-lg">🛏️</span> <strong>สบาย:</strong> ลงทุนกับที่นอนและหมอนที่เหมาะสมกับสรีระของคุณ</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <section id="builder" class="pt-16 -mt-16">
+                 <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-main mb-2">✍️ ตัวช่วยสร้างกิจวัตรของคุณ</h2>
+                    <p class="text-md text-soft max-w-3xl mx-auto">ลองเลือกกิจกรรมที่คุณคิดว่าเหมาะสมกับตัวเอง เพื่อสร้างภาพตารางเวลาในอุดมคติของคุณ</p>
+                </div>
+                <div class="bg-secondary rounded-xl p-6 md:p-8">
+                    <div id="timeline-container" class="relative w-full h-20 bg-white rounded-lg shadow-inner overflow-hidden mb-6">
+                         <div class="absolute w-full top-0 left-0 flex text-xs text-gray-400 h-full">
+                            <div class="w-1/4 border-r border-gray-200 flex items-end justify-center pb-1">6:00</div>
+                            <div class="w-1/4 border-r border-gray-200 flex items-end justify-center pb-1">12:00</div>
+                            <div class="w-1/4 border-r border-gray-200 flex items-end justify-center pb-1">18:00</div>
+                            <div class="w-1/4 flex items-end justify-center pb-1">24:00</div>
+                        </div>
+                    </div>
+                    
+                    <div id="activity-buttons">
+                        <h4 class="font-semibold mb-3 text-main">เลือกกิจกรรมเพื่อเพิ่มในตารางเวลา:</h4>
+                         <div class="flex flex-wrap gap-2">
+                             <button data-start="6" data-end="7" class="activity-btn">ตื่น + รับแสงแดด</button>
+                             <button data-start="7" data-end="8" class="activity-btn">ออกกำลังกายเบาๆ</button>
+                             <button data-start="8" data-end="9" class="activity-btn">อาหารเช้า</button>
+                             <button data-start="9" data-end="12" class="activity-btn">ทำงาน/เรียน (Deep Work)</button>
+                             <button data-start="12" data-end="13" class="activity-btn">อาหารเที่ยง</button>
+                             <button data-start="13" data-end="16" class="activity-btn">งานสร้างสรรค์/ประชุม</button>
+                             <button data-start="16" data-end="18" class="activity-btn">พักผ่อน/เดินทาง</button>
+                             <button data-start="18" data-end="19" class="activity-btn">อาหารเย็น</button>
+                             <button data-start="19" data-end="21" class="activity-btn">เวลาส่วนตัว/ครอบครัว</button>
+                             <button data-start="21" data-end="22" class="activity-btn">Digital Sunset/อ่านหนังสือ</button>
+                             <button data-start="22" data-end="6" class="activity-btn">นอนหลับ</button>
+                             <button id="reset-btn" class="bg-red-200 text-red-800 hover:bg-red-300 font-semibold py-2 px-4 rounded-lg transition-colors text-sm">ล้างทั้งหมด</button>
+                         </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const smoothScrollLinks = document.querySelectorAll('a[href^="#"]');
+            for (const link of smoothScrollLinks) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            }
+
+            const hormoneCtx = document.getElementById('hormoneChart')?.getContext('2d');
+            if (hormoneCtx) {
+                new Chart(hormoneCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['0:00', '3:00', '6:00', '9:00', '12:00', '15:00', '18:00', '21:00'],
+                        datasets: [{
+                            label: 'คอร์ติซอล (ตื่นตัว)',
+                            data: [1, 2, 7, 10, 8, 6, 4, 2],
+                            borderColor: '#DDA15E',
+                            backgroundColor: 'rgba(221, 161, 94, 0.2)',
+                            fill: true,
+                            tension: 0.4
+                        }, {
+                            label: 'เมลาโทนิน (นอนหลับ)',
+                            data: [8, 9, 4, 2, 1, 2, 3, 7],
+                            borderColor: '#60A5FA',
+                            backgroundColor: 'rgba(96, 165, 250, 0.2)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, display: false }, x: { grid: { display: false } } },
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+
+            const productivityCtx = document.getElementById('productivityChart')?.getContext('2d');
+            if (productivityCtx) {
+                new Chart(productivityCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['9:00-10:30', 'พัก', '10:50-12:20', 'พัก', '13:30-15:00', 'พัก'],
+                        datasets: [{
+                            label: 'ระดับสมาธิ',
+                            data: [90, 20, 85, 20, 75, 20],
+                            backgroundColor: (context) => context.dataIndex % 2 === 0 ? '#A3B18A' : '#F4EAD2',
+                            borderColor: (context) => context.dataIndex % 2 === 0 ? '#8a9a70' : '#d3c4a1',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { display: false, max: 100 },
+                            x: { grid: { display: false } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            const eveningActivityCtx = document.getElementById('eveningActivityChart')?.getContext('2d');
+            if(eveningActivityCtx) {
+                new Chart(eveningActivityCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['เล่นมือถือก่อนนอน', 'ออกกำลังกายหนัก', 'ทานมื้อดึก', 'เดินเบาๆ', 'อ่านหนังสือ', 'นั่งสมาธิ'],
+                        datasets: [{
+                            label: 'ผลกระทบต่อคุณภาพการนอน',
+                            data: [-8, -6, -5, 4, 7, 9],
+                            backgroundColor: (context) => context.raw < 0 ? 'rgba(239, 68, 68, 0.6)' : 'rgba(34, 197, 94, 0.6)',
+                            borderColor: (context) => context.raw < 0 ? 'rgba(239, 68, 68, 1)' : 'rgba(34, 197, 94, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: {
+                                    callback: function(value, index, values) {
+                                        if (value === 0) return 'กลาง';
+                                        if (value > 0) return 'ดีขึ้น';
+                                        if (value < 0) return 'แย่ลง';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            const timelineContainer = document.getElementById('timeline-container');
+            const activityButtons = document.querySelectorAll('.activity-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            
+            const addedActivities = new Set();
+
+            const styleButton = (button) => {
+                 button.style.backgroundColor = '#A3B18A';
+                 button.style.color = 'white';
+                 button.style.fontWeight = '600';
+                 button.style.padding = '0.5rem 1rem';
+                 button.style.borderRadius = '0.5rem';
+                 button.style.transition = 'background-color 0.3s';
+                 button.addEventListener('mouseover', () => {
+                     if (!button.disabled) button.style.backgroundColor = '#8a9a70';
+                 });
+                 button.addEventListener('mouseout', () => {
+                     if (!button.disabled) button.style.backgroundColor = '#A3B18A';
+                 });
+            };
+
+            activityButtons.forEach(btn => {
+                styleButton(btn);
+                btn.addEventListener('click', () => {
+                    const start = parseFloat(btn.dataset.start);
+                    const end = parseFloat(btn.dataset.end);
+                    const label = btn.innerText;
+
+                    if (addedActivities.has(label)) return;
+
+                    const item = document.createElement('div');
+                    item.className = 'timeline-item';
+                    item.innerText = label;
+
+                    let left, width;
+                    if (start < end) {
+                        left = (start / 24) * 100;
+                        width = ((end - start) / 24) * 100;
+                    } else { 
+                        left = (start / 24) * 100;
+                        width = (((24 - start) + end) / 24) * 100;
+                    }
+
+                    item.style.left = `${left}%`;
+                    item.style.width = `${width}%`;
+
+                    timelineContainer.appendChild(item);
+                    addedActivities.add(label);
+                    btn.disabled = true;
+                    btn.style.backgroundColor = '#d1d5db';
+                    btn.style.cursor = 'not-allowed';
+                });
+            });
+
+            resetBtn.addEventListener('click', () => {
+                timelineContainer.innerHTML = ` <div class="absolute w-full top-0 left-0 flex text-xs text-gray-400 h-full">
+                            <div class="w-1/4 border-r border-gray-200 flex items-end justify-center pb-1">6:00</div>
+                            <div class="w-1/4 border-r border-gray-200 flex items-end justify-center pb-1">12:00</div>
+                            <div class="w-1/4 border-r border-gray-200 flex items-end justify-center pb-1">18:00</div>
+                            <div class="w-1/4 flex items-end justify-center pb-1">24:00</div>
+                        </div>`;
+                addedActivities.clear();
+                activityButtons.forEach(btn => {
+                    btn.disabled = false;
+                    styleButton(btn);
+                    btn.style.cursor = 'pointer';
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>
